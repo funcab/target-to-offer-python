@@ -77,7 +77,7 @@ RR模式中InnoDB引擎的MVCC解决幻读
 1. 查询表级锁争用情况
   MySQL内部有两组专门的状态变量记录系统内部锁资源争用情况：
 
-    ```
+  ```
   mysql> show status like 'table%';
   +----------------------------+---------+
   | Variable_name              | Value   |
@@ -85,7 +85,7 @@ RR模式中InnoDB引擎的MVCC解决幻读
   | Table_locks_immediate      | 100     |
   | Table_locks_waited         | 11      |
   +----------------------------+---------+
-    ```
+  ```
 
   这里有两个状态变量记录MySQL内部表级锁定的情况，两个变量说明如下：
   Table_locks_immediate：产生表级锁定的次数；
@@ -135,10 +135,10 @@ RR模式中InnoDB引擎的MVCC解决幻读
   如果一个事务请求的锁模式与当前的锁兼容，InnoDB就将请求的锁授予该事务；反之，如果两者不兼容，该事务就要等待锁释放。
   意向锁是InnoDB自动加的，不需用户干预。对于UPDATE、DELETE和INSERT语句，InnoDB会自动给涉及数据集加排他锁（X)；对于普通SELECT语句，InnoDB不会加任何锁；事务可以通过以下语句显示给记录集加共享锁或排他锁。
 
-    ```
+  ```
   共享锁 (S) : SELECT * FROM table_name WHERE ... LOCK IN SHARE MODE
   排他锁 (X) : SELECT * FROM table_name WHERE ... FOR UPDATE
-    ```
+  ```
 
 2. InnoDB行锁实现方式
   InnoDB行锁是通过给索引上的索引项加锁来实现的，只有通过索引条件检索数据，InnoDB才使用行级锁，否则，InnoDB将使用表锁
@@ -155,7 +155,9 @@ RR模式中InnoDB引擎的MVCC解决幻读
   例：
   假如emp表中只有101条记录，其empid的值分别是 1,2,...,100,101，下面的SQL：
 
-      mysql> select * from emp where empid > 100 for update;
+  ```
+  mysql> select * from emp where empid > 100 for update;
+  ```
 
   是一个范围条件的检索，InnoDB不仅会对符合条件的empid值为101的记录加锁，也会对empid大于101（这些记录并不存在）的“间隙”加锁。
   InnoDB使用间隙锁的目的：
@@ -198,7 +200,6 @@ RR模式中InnoDB引擎的MVCC解决幻读
     
     2. 在用 LOCK TABLES对InnoDB表加锁时要注意，要将AUTOCOMMIT设为0，否则MySQL不会给表加锁；事务结束前，不要用UNLOCK TABLES释放表锁，因为UNLOCK TABLES会隐含地提交事务；COMMIT或ROLLBACK并不能释放用LOCK TABLES加的表级锁，必须用UNLOCK TABLES释放表锁。正确的方式见如下语句：
       例如，如果需要写表t1并从表t读，可以按如下做：
-
         ```
       SET AUTOCOMMIT=0;
       LOCK TABLES t1 WRITE, t2 READ, ...;
