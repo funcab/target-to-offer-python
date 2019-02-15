@@ -200,13 +200,13 @@ RR模式中InnoDB引擎的MVCC解决幻读
     
     2. 在用 LOCK TABLES对InnoDB表加锁时要注意，要将AUTOCOMMIT设为0，否则MySQL不会给表加锁；事务结束前，不要用UNLOCK TABLES释放表锁，因为UNLOCK TABLES会隐含地提交事务；COMMIT或ROLLBACK并不能释放用LOCK TABLES加的表级锁，必须用UNLOCK TABLES释放表锁。正确的方式见如下语句：
       例如，如果需要写表t1并从表t读，可以按如下做：
-    ```
+  ```
   SET AUTOCOMMIT=0;
   LOCK TABLES t1 WRITE, t2 READ, ...;
   [do something with tables t1 and t2 here];
   COMMIT;
   UNLOCK TABLES;
-    ```
+  ```
 
 6. InnoDB行锁优化建议
   InnoDB存储引擎由于实现了行级锁定，虽然在锁定机制的实现方面所带来的性能损耗可能比表级锁定会要更高一些，但是在整体并发处理能力方面要远远优于MyISAM的表级锁定的。当系统并发量较高的时候，InnoDB的整体性能和MyISAM相比就会有比较明显的优势了。但是，InnoDB的行级锁定同样也有其脆弱的一面，当我们使用不当的时候，可能会让InnoDB的整体性能表现不仅不能比MyISAM高，甚至可能会更差。
