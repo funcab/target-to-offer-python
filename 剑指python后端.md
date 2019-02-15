@@ -155,16 +155,15 @@ RR模式中InnoDB引擎的MVCC解决幻读
   例：
   假如emp表中只有101条记录，其empid的值分别是 1,2,...,100,101，下面的SQL：
 
-  ```
+    ```
   mysql> select * from emp where empid > 100 for update;
-  ```
+    ```
 
   是一个范围条件的检索，InnoDB不仅会对符合条件的empid值为101的记录加锁，也会对empid大于101（这些记录并不存在）的“间隙”加锁。
   InnoDB使用间隙锁的目的：
 
   是一个范围条件的检索，InnoDB不仅会对符合条件的empid值为101的记录加锁，也会对empid大于101（这些记录并不存在）的“间隙”加锁。
   InnoDB使用间隙锁的目的：
-
     1. 防止幻读，以满足相关隔离级别的要求。对于上面的例子，要是不使用间隙锁，如果其他事务插入了empid大于100的任何记录，那么本事务如果再次执行上述语句，就会发生幻读；
     2. 为了满足其恢复和复制的需要。很显然，在使用范围条件检索并锁定记录时，即使某些不存在的键值也会被无辜的锁定，而造成在锁定的时候无法插入锁定键值范围内的任何数据。在某些场景下这可能会对性能造成很大的危害。
   除了间隙锁给InnoDB带来性能的负面影响之外，通过索引实现锁定的方式还存在其他几个较大的性能隐患：
@@ -201,13 +200,13 @@ RR模式中InnoDB引擎的MVCC解决幻读
     
     2. 在用 LOCK TABLES对InnoDB表加锁时要注意，要将AUTOCOMMIT设为0，否则MySQL不会给表加锁；事务结束前，不要用UNLOCK TABLES释放表锁，因为UNLOCK TABLES会隐含地提交事务；COMMIT或ROLLBACK并不能释放用LOCK TABLES加的表级锁，必须用UNLOCK TABLES释放表锁。正确的方式见如下语句：
       例如，如果需要写表t1并从表t读，可以按如下做：
-  ```
+    ```
   SET AUTOCOMMIT=0;
   LOCK TABLES t1 WRITE, t2 READ, ...;
   [do something with tables t1 and t2 here];
   COMMIT;
   UNLOCK TABLES;
-  ```
+    ```
 
 6. InnoDB行锁优化建议
   InnoDB存储引擎由于实现了行级锁定，虽然在锁定机制的实现方面所带来的性能损耗可能比表级锁定会要更高一些，但是在整体并发处理能力方面要远远优于MyISAM的表级锁定的。当系统并发量较高的时候，InnoDB的整体性能和MyISAM相比就会有比较明显的优势了。但是，InnoDB的行级锁定同样也有其脆弱的一面，当我们使用不当的时候，可能会让InnoDB的整体性能表现不仅不能比MyISAM高，甚至可能会更差。
