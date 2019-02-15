@@ -77,7 +77,7 @@ RR模式中InnoDB引擎的MVCC解决幻读
 1. 查询表级锁争用情况
   MySQL内部有两组专门的状态变量记录系统内部锁资源争用情况：
 
-  ```
+    ```
   mysql> show status like 'table%';
   +----------------------------+---------+
   | Variable_name              | Value   |
@@ -85,7 +85,7 @@ RR模式中InnoDB引擎的MVCC解决幻读
   | Table_locks_immediate      | 100     |
   | Table_locks_waited         | 11      |
   +----------------------------+---------+
-  ```
+    ```
 
   这里有两个状态变量记录MySQL内部表级锁定的情况，两个变量说明如下：
   Table_locks_immediate：产生表级锁定的次数；
@@ -135,10 +135,10 @@ RR模式中InnoDB引擎的MVCC解决幻读
   如果一个事务请求的锁模式与当前的锁兼容，InnoDB就将请求的锁授予该事务；反之，如果两者不兼容，该事务就要等待锁释放。
   意向锁是InnoDB自动加的，不需用户干预。对于UPDATE、DELETE和INSERT语句，InnoDB会自动给涉及数据集加排他锁（X)；对于普通SELECT语句，InnoDB不会加任何锁；事务可以通过以下语句显示给记录集加共享锁或排他锁。
 
-  ```
+    ```
   共享锁 (S) : SELECT * FROM table_name WHERE ... LOCK IN SHARE MODE
   排他锁 (X) : SELECT * FROM table_name WHERE ... FOR UPDATE
-  ```
+    ```
 
 2. InnoDB行锁实现方式
   InnoDB行锁是通过给索引上的索引项加锁来实现的，只有通过索引条件检索数据，InnoDB才使用行级锁，否则，InnoDB将使用表锁
@@ -155,9 +155,7 @@ RR模式中InnoDB引擎的MVCC解决幻读
   例：
   假如emp表中只有101条记录，其empid的值分别是 1,2,...,100,101，下面的SQL：
 
-    ```
-  mysql> select * from emp where empid > 100 for update;
-    ```
+      mysql> select * from emp where empid > 100 for update;
 
   是一个范围条件的检索，InnoDB不仅会对符合条件的empid值为101的记录加锁，也会对empid大于101（这些记录并不存在）的“间隙”加锁。
   InnoDB使用间隙锁的目的：
@@ -172,9 +170,6 @@ RR模式中InnoDB引擎的MVCC解决幻读
     3. 当Query在使用索引定位数据的时候，如果使用的索引键一样但访问的数据行不同的时候（索引只是过滤条件的一部分），一样会被锁定。
   因此，在实际应用开发中，尤其是并发插入比较多的应用，我们要尽量优化业务逻辑，尽量使用相等条件来访问更新数据，避免使用范围条件。
   还要特别说明的是，InnoDB除了通过范围条件加锁时使用间隙锁外，如果使用相等条件请求给一个不存在的记录加锁，InnoDB也会使用间隙锁。
-    ```
-  
-    ```
 
 4. 死锁
   其他上文讲过，MyISAM表锁是deadlock free的，这是因为MyISAM总是一次获得所需的全部锁，要么全部满足，要么等待，因此不会出现死锁。但在InnoDB中，除单个SQL组成的事务外，锁是逐步获得的，当两个事务都需要获得对方持有的排他锁才能继续完成事务，这种循环锁等待就是典型的死锁。
@@ -203,13 +198,14 @@ RR模式中InnoDB引擎的MVCC解决幻读
     
     2. 在用 LOCK TABLES对InnoDB表加锁时要注意，要将AUTOCOMMIT设为0，否则MySQL不会给表加锁；事务结束前，不要用UNLOCK TABLES释放表锁，因为UNLOCK TABLES会隐含地提交事务；COMMIT或ROLLBACK并不能释放用LOCK TABLES加的表级锁，必须用UNLOCK TABLES释放表锁。正确的方式见如下语句：
       例如，如果需要写表t1并从表t读，可以按如下做：
-  ```
-  SET AUTOCOMMIT=0;
-  LOCK TABLES t1 WRITE, t2 READ, ...;
-  [do something with tables t1 and t2 here];
-  COMMIT;
-  UNLOCK TABLES;
-  ```
+
+        ```
+      SET AUTOCOMMIT=0;
+      LOCK TABLES t1 WRITE, t2 READ, ...;
+      [do something with tables t1 and t2 here];
+      COMMIT;
+      UNLOCK TABLES;
+        ```
 
 6. InnoDB行锁优化建议
   InnoDB存储引擎由于实现了行级锁定，虽然在锁定机制的实现方面所带来的性能损耗可能比表级锁定会要更高一些，但是在整体并发处理能力方面要远远优于MyISAM的表级锁定的。当系统并发量较高的时候，InnoDB的整体性能和MyISAM相比就会有比较明显的优势了。但是，InnoDB的行级锁定同样也有其脆弱的一面，当我们使用不当的时候，可能会让InnoDB的整体性能表现不仅不能比MyISAM高，甚至可能会更差。
@@ -220,51 +216,49 @@ RR模式中InnoDB引擎的MVCC解决幻读
         3. 尽可能减少基于范围的数据检索过滤条件，避免因为间隙锁带来的负面影响而锁定了不该锁定的记录；
         4. 尽量控制事务的大小，减少锁定的资源量和锁定时间长度；
         5. 在业务环境允许的情况下，尽量使用较低级别的事务隔离，以减少MySQL因为实现事务隔离级别所带来的附加成本。
+
     2. 由于InnoDB的行级锁定和事务性，所以肯定会产生死锁，下面是一些比较常用的减少死锁产生概率的小建议：
         1. 类似业务模块中，尽可能按照相同的访问顺序来访问，防止产生死锁；
         2. 在同一个事务中，尽可能做到一次锁定所需要的所有资源，减少死锁产生概率；
         3. 对于非常容易产生死锁的业务部分，可以尝试使用升级锁定颗粒度，通过表级锁定来减少死锁产生的概率。
+
     3. 可以通过检查InnoDB_row_lock状态变量来分析系统上的行锁的争夺情况：
-  ```
-  mysql> show status like 'InnoDB_row_lock%';
-  +-------------------------------+-------+
-  | Variable_name                 | Value |
-  +-------------------------------+-------+
-  | InnoDB_row_lock_current_waits | 0     |
-  | InnoDB_row_lock_time          | 0     |
-  | InnoDB_row_lock_time_avg      | 0     |
-  | InnoDB_row_lock_time_max      | 0     |
-  | InnoDB_row_lock_waits         | 0     |
-  +-------------------------------+-------+
-  ```
 
-  InnoDB 的行级锁定状态变量不仅记录了锁定等待次数，还记录了锁定总时长，每次平均时长，以及最大时长，此外还有一个非累积状态量显示了当前正在等待锁定的等待数量。对各个状态量的说明如下：
-  InnoDB_row_lock_current_waits：当前正在等待锁定的数量；
-  InnoDB_row_lock_time：从系统启动到现在锁定总时间长度；
-  InnoDB_row_lock_time_avg：每次等待所花平均时间；
-  InnoDB_row_lock_time_max：从系统启动到现在等待最常的一次所花的时间；
-  InnoDB_row_lock_waits：系统启动后到现在总共等待的次数；
-  对于这5个状态变量，比较重要的主要是InnoDB_row_lock_time_avg（等待平均时长），InnoDB_row_lock_waits（等待总次数）以及InnoDB_row_lock_time（等待总时长）这三项。尤其是当等待次数很高，而且每次等待时长也不小的时候，我们就需要分析系统中为什么会有如此多的等待，然后根据分析结果着手指定优化计划。
-  如果发现锁争用比较严重，如InnoDB_row_lock_waits和InnoDB_row_lock_time_avg的值比较高，还可以通过设置InnoDB Monitors 来进一步观察发生锁冲突的表、数据行等，并分析锁争用的原因。
-  锁冲突的表、数据行等，并分析锁争用的原因。具体方法如下：
+        ```
+        mysql> show status like 'InnoDB_row_lock%';
+        +-------------------------------+-------+
+        | Variable_name                 | Value |
+        +-------------------------------+-------+
+        | InnoDB_row_lock_current_waits | 0     |
+        | InnoDB_row_lock_time          | 0     |
+        | InnoDB_row_lock_time_avg      | 0     |
+        | InnoDB_row_lock_time_max      | 0     |
+        | InnoDB_row_lock_waits         | 0     |
+        +-------------------------------+-------+
+        ```
 
-  ```
-  mysql> create table InnoDB_monitor(a INT) engine=InnoDB;
-  ```
+        InnoDB 的行级锁定状态变量不仅记录了锁定等待次数，还记录了锁定总时长，每次平均时长，以及最大时长，此外还有一个非累积状态量显示了当前正在等待锁定的等待数量。对各个状态量的说明如下：
+        InnoDB_row_lock_current_waits：当前正在等待锁定的数量；
+        InnoDB_row_lock_time：从系统启动到现在锁定总时间长度；
+        InnoDB_row_lock_time_avg：每次等待所花平均时间；
+        InnoDB_row_lock_time_max：从系统启动到现在等待最常的一次所花的时间；
+        InnoDB_row_lock_waits：系统启动后到现在总共等待的次数；
+        对于这5个状态变量，比较重要的主要是InnoDB_row_lock_time_avg（等待平均时长），InnoDB_row_lock_waits（等待总次数）以及InnoDB_row_lock_time（等待总时长）这三项。尤其是当等待次数很高，而且每次等待时长也不小的时候，我们就需要分析系统中为什么会有如此多的等待，然后根据分析结果着手指定优化计划。
+        如果发现锁争用比较严重，如InnoDB_row_lock_waits和InnoDB_row_lock_time_avg的值比较高，还可以通过设置InnoDB Monitors 来进一步观察发生锁冲突的表、数据行等，并分析锁争用的原因。
 
-  然后就可以用下面的语句来进行查看：
+        具体方法如下：
 
-  ```
-  mysql> show engine InnoDB status;
-  ```
+            mysql> create table InnoDB_monitor(a INT) engine=InnoDB;
 
-  监视器可以通过发出下列语句来停止查看：
+        然后就可以用下面的语句来进行查看：
 
-  ```
-  mysql> drop table InnoDB_monitor;
-  ```
+            mysql> show engine InnoDB status;
 
-  设置监视器后，会有详细的当前锁等待的信息，包括表名、锁类型、锁定记录的情况等，便于进行进一步的分析和问题的确定。可能会有读者朋友问为什么要先创建一个叫InnoDB_monitor的表呢？因为创建该表实际上就是告诉InnoDB我们开始要监控他的细节状态了，然后InnoDB就会将比较详细的事务以及锁定信息记录进入MySQL的errorlog中，以便我们后面做进一步分析使用。打开监视器以后，默认情况下每15秒会向日志中记录监控的内容，如果长时间打开会导致.err文件变得非常的巨大，所以用户在确认问题原因之后，要记得删除监控表以关闭监视器，或者通过使用“--console”选项来启动服务器以关闭写日志文件。
+        监视器可以通过发出下列语句来停止查看：
+
+            mysql> drop table InnoDB_monitor;
+
+        设置监视器后，会有详细的当前锁等待的信息，包括表名、锁类型、锁定记录的情况等，便于进行进一步的分析和问题的确定。可能会有读者朋友问为什么要先创建一个叫InnoDB_monitor的表呢？因为创建该表实际上就是告诉InnoDB我们开始要监控他的细节状态了，然后InnoDB就会将比较详细的事务以及锁定信息记录进入MySQL的errorlog中，以便我们后面做进一步分析使用。打开监视器以后，默认情况下每15秒会向日志中记录监控的内容，如果长时间打开会导致.err文件变得非常的巨大，所以用户在确认问题原因之后，要记得删除监控表以关闭监视器，或者通过使用“--console”选项来启动服务器以关闭写日志文件。
 
 ### 非关系型数据库（redis）
 ## 操作系统（15%）
