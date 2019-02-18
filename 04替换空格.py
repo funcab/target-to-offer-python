@@ -11,6 +11,7 @@ class Solution:
         #在class下的函数入参需要有self
         if type(s) != str:
             return
+            
         return s.replace(' ', '%20')
 s = 'we are happy'
 test = Solution()
