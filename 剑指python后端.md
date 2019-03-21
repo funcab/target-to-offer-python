@@ -20,42 +20,28 @@ DML—数据操纵语言(Select，Delete，Update，Insert
 DCL—数据控制语言(GRANT，REVOKE，COMMIT，ROLLBACK)
 
 ##### 用户 授权
-1. 创建用户 host：本地为localhost 任意为%
-    ```
-    CREATE USER 'username'@'host' IDENTIFIED BY 'password'; 
-    ```
-2. 删除用户
-    ```
-    DROP USER 'username'@'host';
-    ```
-3. 设置与更改用户密码
+```
+创建用户 host：本地为localhost 任意为%
+CREATE USER 'username'@'host' IDENTIFIED BY 'password'; 
 
-    ```
-    SET PASSWORD FOR 'username'@'host' = PASSWORD('newpassword');
-    ```
+删除用户
+DROP USER 'username'@'host';
 
-    如果是当前登录用户用：
+设置与更改用户密码
+SET PASSWORD FOR 'username'@'host' = PASSWORD('newpassword');
+如果是当前登录用户用：
+SET PASSWORD = PASSWORD("newpassword");
 
-    ```
-    SET PASSWORD = PASSWORD("newpassword");
-    ```
-4.  授权 privileges：SELECT , INSERT , UPDATE，DELETE 等 全部为all
+授权 privileges：SELECT , INSERT , UPDATE，DELETE 等 全部为all
+GRANT privileges ON databasename.tablename TO 'username'@'host';
+注意：用以上命令授权的用户不能给其它用户授权，如果想让该用户可以授权，用以下命令：
+GRANT privileges ON databasename.tablename TO 'username'@'host' WITH GRANT OPTION;
 
-    ```
-    GRANT privileges ON databasename.tablename TO 'username'@'host';
-    ```
-    注意：用以上命令授权的用户不能给其它用户授权，如果想让该用户可以授权，用以下命令：
-    ```
-    GRANT privileges ON databasename.tablename TO 'username'@'host' WITH GRANT OPTION;
-    ```
-5. 撤销用户权限
-    ```
-    REVOKE privilege ON databasename.tablename FROM 'username'@'host';
-    ```
-    注意: 假如你在给用户’username’@’%’授权的时候是这样的(或类似的)：GRANT SELECT ON testDB.user TO ‘username’@’%’, 则在使用REVOKE SELECT ON . FROM ‘username’@’%’;命令并不能撤销该用户对testDB数据库中user表的SELECT 操作。相反，如果授权使用的是GRANT SELECT ON . TO ‘username’@’%’;则REVOKE SELECT ON testDB.user FROM ‘username’@’%’;命令也不能撤销该用户对testDB数据库中user表的Select 权限。
-
-    具体信息可以用命令SHOW GRANTS FOR ‘username’@’%’; 查看。
-
+撤销用户权限
+REVOKE privilege ON databasename.tablename FROM 'username'@'host';
+注意: 假如你在给用户’username’@’%’授权的时候是这样的(或类似的)：GRANT SELECT ON testDB.user TO ‘username’@’%’, 则在使用REVOKE SELECT ON . FROM ‘username’@’%’;命令并不能撤销该用户对testDB数据库中user表的SELECT 操作。相反，如果授权使用的是GRANT SELECT ON . TO ‘username’@’%’;则REVOKE SELECT ON testDB.user FROM ‘username’@’%’;命令也不能撤销该用户对testDB数据库中user表的Select 权限。
+具体信息可以用命令SHOW GRANTS FOR ‘username’@’%’; 查看。
+```
 ##### 数据库 表 索引 视图
 
 1. 数据库    
@@ -88,7 +74,7 @@ DCL—数据控制语言(GRANT，REVOKE，COMMIT，ROLLBACK)
       空值：null
       字符串类型和日期类型都要用单引号括起来
       ```
-    2. 建表
+    1. 建表
          - 创建新表
             ```
             CREATE TABLE IF NOT EXISTS `runoob_tbl`(
@@ -119,7 +105,7 @@ DCL—数据控制语言(GRANT，REVOKE，COMMIT，ROLLBACK)
             ```
             CREATE TABLE tab_new as select col1,col2… from tab_old definition only #用户表 
             ```
-    3. 单表约束
+    2. 单表约束
         主键约束：primary key,要求被修饰的字段：唯一和非空
         ```
         创建：ALTER TABLE tablename ADD PRIMARY KEY(col)
@@ -127,17 +113,17 @@ DCL—数据控制语言(GRANT，REVOKE，COMMIT，ROLLBACK)
         ```
         唯一约束：unique，要求被修饰的字段：唯一
         非空约束：not null，要求被修饰的字段：非空
-    4. 查看表
+    3. 查看表
         ```
         查看数据库中的所有表：show tables;
         查看表结构：desc/describe 表名;
         查看表的创建细节：show create table 表名;
         ```
-    5. 删除表
+    4. 删除表
         ```
         drop table 表名;
         ```
-    6. 修改表
+    5. 修改表
         ```
         alter table 表名 add 列名 类型（长度） [约束]; --添加列
         注意：列增加后将不能删除。DB2中列加上后数据类型也不能改变，唯一能改变的是增加varchar类型的长度
@@ -146,7 +132,7 @@ DCL—数据控制语言(GRANT，REVOKE，COMMIT，ROLLBACK)
         alter table 表名 drop 列名; --删除列 
         alter table 表名 character set 字符集; --修改表的字符集 rename table 表名 to 新表名; --修改表名
         ```
-    7. 对表内容的增删改
+    6. 对表内容的增删改
         ```
         插入数据：insert
         insert into 表(列名1，列名2，列名3..) values(值1，值2，值3..);--向表中插入某些列
@@ -189,7 +175,10 @@ DCL—数据控制语言(GRANT，REVOKE，COMMIT，ROLLBACK)
       ```
    4. 计算字段
       ```
-      字段间计算 select age*salary,name from employee; 运算查询 select pname,price+10 from product; comm列有很多记录的值为NULL，因为任何东西与NULL相加结果还是NULL，所以结算结果可能会出现NULL。下面使用了把NULL转换成数值0的函数IFNULL select *,sal+ifnull(comm,0) from emp;
+      字段间计算 select age*salary,name from employee; 
+      运算查询 select pname,price+10 from product; 
+      comm列有很多记录的值为NULL，因为任何东西与NULL相加结果还是NULL，所以结算结果可能会出现NULL。下面使用了把NULL转换成数值0的函数
+      IFNULL select *,sal+ifnull(comm,0) from emp;
       ```
    5. 条件查询
       ```
@@ -239,6 +228,7 @@ DCL—数据控制语言(GRANT，REVOKE，COMMIT，ROLLBACK)
       ```
    8. 分组查询
    当需要分组查询时需要使用group by子句，例如查询每个部分的工资和，就需要使用部门来分组。
+   
    **注：凡是和聚合函数同时出现的列名，则一定要写在group by之后**
       ```
       select deptno,sum(sal) from emp group by deptno;-- 查询每个部门的编号和每个部门的工资和 
@@ -293,9 +283,8 @@ DCL—数据控制语言(GRANT，REVOKE，COMMIT，ROLLBACK)
       select * from B;
       ```
     2. 连接查询
-    (inner) join
-    Left/right/full (outer) join [where …]
-    select * from A left outer join B on A.xx = B.yy
+   (inner) join
+   Left/right/full (outer) join [where …]
         ```
         通过left join去重
         select test1.*,t2.kjxyh from test1 left join(
@@ -306,7 +295,7 @@ DCL—数据控制语言(GRANT，REVOKE，COMMIT，ROLLBACK)
         ) where r = 1 ) t2
         on  test1.Name = t2.Name And  test1.sex = t2.sex
         ```
-   3. 子查询
+   1. 子查询
    SQL语句允许将一个查询语句做为一个结果集供其他SQL语句使用，就像使用普通的表一样，被当作结果集的查询语句被称为子查询。
       - 若结果集为单行单列（标量子查询），则可放在select或where语句中
       - 若结果集为多行单列，可放在where语句中，配合in使用
