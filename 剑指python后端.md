@@ -56,74 +56,271 @@ DCL—数据控制语言(GRANT，REVOKE，COMMIT，ROLLBACK)
 
     具体信息可以用命令SHOW GRANTS FOR ‘username’@’%’; 查看。
 
-##### 数据库 表 主键 索引 列 视图
+##### 数据库 表 索引 视图
 
-1. 数据库 创建 删除 改名 使用
+1. 数据库    
     ```
-    CREATE DATABASE databasename;
-    DROP DATABASE databasename;
-    alter database 旧名称 modify name = 新名称
-    use databasename;
+    创建数据库 create databse mydb1; 
+    创建数据库并设置编码格式为gbk。不指定的话默认为utf-8,这个在安装的时候设置了 create database mydb2 character set gbk; 
+    设置校验规则 create database mydb3 character set gbk collate gbk_chinese_ci; 
+    修改数据库名称 alter database 旧名称 modify name = 新名称
+    查看当前数据库服务器中的所有数据库 show databases; 
+    查看前面创建的mydb2数据库的定义信息 show create database mydb2
+    删除前面创建的mydb3数据库 drop database mydb3; 
+    把mydb2的字符集修改为utf8 alter database mydb2 set utf8; 
+    查看当前使用的数据库 select database(); 
+    切换数据库 use mydb2;
+    注意：注释为敲完两个短线之后要敲一个空格 -- xxx
     ```
-2. 建表
-   - 创建新表
+2. 表
+   1. 字段类型
       ```
-      CREATE TABLE IF NOT EXISTS `runoob_tbl`(
-        `runoob_id` INT UNSIGNED AUTO_INCREMENT,
-        `runoob_title` VARCHAR(100) NOT NULL,
-        `runoob_author` VARCHAR(40) NOT NULL,
-        `submission_date` DATE,
-        PRIMARY KEY ( `runoob_id` )
-      )ENGINE=InnoDB DEFAULT CHARSET=utf8;
+      int :整型，4个字节
+      double:浮点型，例如double(5,2)表示最多5位，其中2位为小数，即最大值为999.99。
+      varchar:可变长度字符串类型。varchar(10) ‘aaa’ 占3位
+      datetime:日期时间类型。yyyy-MM-dd hh:mm:ss
+      char:固定长度字符串类型。char(10) ‘aaa ’ 占10位
+      text:大文本字符串类型
+      blob:字节类型
+      date：日期类型，格式为：yyyy-MM-dd
+      time:时间类型，格式为：hh:mm:ss
+      timestamp:时间戳类型 yyyy-MM-dd hh:mm:ss 会自动赋值
+      空值：null
+      字符串类型和日期类型都要用单引号括起来
+      ```
+    2. 建表
+         - 创建新表
+            ```
+            CREATE TABLE IF NOT EXISTS `runoob_tbl`(
+              `runoob_id` INT UNSIGNED AUTO_INCREMENT,
+              `runoob_title` VARCHAR(100) NOT NULL,
+              `runoob_author` VARCHAR(40) NOT NULL,
+              `submission_date` DATE,
+              PRIMARY KEY ( `runoob_id` )
+            )ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-      CREATE TABLE IF NOT EXISTS t_user( 
-        u_id BIGINT UNSIGNED AUTO_INCREMENT NOT NULL COMMENT '编号', 
-        u_phone BIGINT NOT NULL COMMENT '账号-手机号', 
-        u_passwd VARCHAR(100) NOT NULL COMMENT '密码，4-20字符，MD5加密', 
-        u_regtime BIGINT UNSIGNED NOT NULL COMMENT '注册时间，时间戳', 
-        u_check_uid BIGINT UNSIGNED COMMENT '用户类型审核人员ID', 
-        PRIMARY KEY(u_id) COMMENT '主键', 
-        UNIQUE KEY(u_phone) COMMENT '唯一键', FOREIGN KEY(u_check_uid) REFERENCES t_user(u_id) ON DELETE CASCADE, 
-        KEY index_regtime(u_regtime) COMMENT '注册时间-索引' 
-      )ENGINE=INNODB DEFAULT CHARSET=utf8
-      COMMENT '用户表';
+            CREATE TABLE IF NOT EXISTS t_user( 
+              u_id BIGINT UNSIGNED AUTO_INCREMENT NOT NULL COMMENT '编号', 
+              u_phone BIGINT NOT NULL COMMENT '账号-手机号', 
+              u_passwd VARCHAR(100) NOT NULL COMMENT '密码，4-20字符，MD5加密', 
+              u_regtime BIGINT UNSIGNED NOT NULL COMMENT '注册时间，时间戳', 
+              u_check_uid BIGINT UNSIGNED COMMENT '用户类型审核人员ID', 
+              PRIMARY KEY(u_id) COMMENT '主键', 
+              UNIQUE KEY(u_phone) COMMENT '唯一键', FOREIGN KEY(u_check_uid) REFERENCES t_user(u_id) ON DELETE CASCADE, 
+              KEY index_regtime(u_regtime) COMMENT '注册时间-索引' 
+            )ENGINE=INNODB DEFAULT CHARSET=utf8
+            COMMENT '用户表';
+            ```
+         - 通过复制表创建
+            ```
+            CREATE TABLE tab_new like tab_old
+            ```
+         - 通过查询语句创建
+            ```
+            CREATE TABLE tab_new as select col1,col2… from tab_old definition only #用户表 
+            ```
+    3. 单表约束
+        主键约束：primary key,要求被修饰的字段：唯一和非空
+        ```
+        创建：ALTER TABLE tablename ADD PRIMARY KEY(col)
+        删除：ALTER TABLE tablename DROP PRIMARY KEY(col)
+        ```
+        唯一约束：unique，要求被修饰的字段：唯一
+        非空约束：not null，要求被修饰的字段：非空
+    4. 查看表
+        ```
+        查看数据库中的所有表：show tables;
+        查看表结构：desc/describe 表名;
+        查看表的创建细节：show create table 表名;
+        ```
+    5. 删除表
+        ```
+        drop table 表名;
+        ```
+    6. 修改表
+        ```
+        alter table 表名 add 列名 类型（长度） [约束]; --添加列
+        注意：列增加后将不能删除。DB2中列加上后数据类型也不能改变，唯一能改变的是增加varchar类型的长度
+        alter table 表名 modify 列名 类型（长度） [约束]; --修改列类型长度及约束
+        alter table 表名 change 旧列名 新列名 类型（长度） [约束];--修改表列名 
+        alter table 表名 drop 列名; --删除列 
+        alter table 表名 character set 字符集; --修改表的字符集 rename table 表名 to 新表名; --修改表名
+        ```
+    7. 对表内容的增删改
+        ```
+        插入数据：insert
+        insert into 表(列名1，列名2，列名3..) values(值1，值2，值3..);--向表中插入某些列
+        insert into 表 values(值1，值2，值3..); --向表中插入所有列
+        列名与列值的类型，个数，顺序要一一对应。可以把列名当做Java中的形参，把列值当做实参。
+        值不要超出列定义的长度。值如果是字符串或者日期需要加单引号。
+
+        更新记录：update
+        update 表名 set 字段名=值,字段名=值...; --这个会修改所有的数据，把一列的值都变了
+        update 表名 set 字段名=值,字段名=值... where 条件;
+
+        删除记录：delete
+        delete from 表名; --删除表中所有记录
+        delete from 表名 where 条件;
+        truncate table 表名;
+        delete删除表中的数据，是一条一条删除，不清空auto_increment记录数；删除后的数据如果在一个事务中还可以找回。
+        truncate删除是把表直接drop掉，重新建表，auto_increment将置为零。删除的数据不能找回。执行速度比delete快。
+        ```
+3. 数据查询语言DQL
+   1. 简单查询
       ```
-   - 通过复制表创建
+      查询所有列
+      select * from stu;
+      查询指定列
+      select sid,sname,age from stu;
       ```
-      CREATE TABLE tab_new like tab_old
+   2. 别名查询
       ```
-   - 通过查询语句创建
+      as可以省略
+      表别名
+      select * from product as p;
+      列别名
+      select pname as pn from product;
       ```
-      CREATE TABLE tab_new as select col1,col2… from tab_old definition only #用户表 
+   3. 去掉重复值
       ```
-3. 删除新表
-    ```
-    DROP TABLE tablename
-    ```
-4. 增加一个列
-    ```
-    ALTER TABLE tablename ADD COLUMN col TYPE
-    ```
-    注意：列增加后将不能删除。DB2中列加上后数据类型也不能改变，唯一能改变的是增加varchar类型的长度。
-5. 主键
-    ```
-    ALTER TABLE tablename ADD PRIMARY KEY(col)
-    ALTER TABLE tablename DROP PRIMARY KEY(col)
-    ```
-6. 索引
-    ```
-    CREATE [UNIQUE] INDEX idxname ON tablename(col….)
-    DROP INDEX idxname
-    ```
-7. 视图
-    ```
-    CREATE VIEW viewname AS SELECT statement
-    DROP VIEW viewname
-    ```
-8. 几个基本的语句
-   ```
-   
-   ```
+      用来去除重复数据，是对整个结果集(结果集就是查出来的那些数据)进行数据重复抑制的，而不是针对某一列。
+      性能不好，实际多用group by去重。
+      select distinct Department,SubCompany from Employee;
+      ```
+   4. 计算字段
+      ```
+      字段间计算 select age*salary,name from employee; 运算查询 select pname,price+10 from product; comm列有很多记录的值为NULL，因为任何东西与NULL相加结果还是NULL，所以结算结果可能会出现NULL。下面使用了把NULL转换成数值0的函数IFNULL select *,sal+ifnull(comm,0) from emp;
+      ```
+   5. 条件查询
+      ```
+      where后的条件写法 = != <> < <= > >= between…and in(set) and or not is null
+      like，_代表任意一个字符，%代表任意0-n个字符
+      select * from stu where gender='female' and age<50; 
+      select * from stu where sid='S_1001' and sname='lisi'; 
+      select * from stu where sid in('S_1001','S_1002','S_1003');
+      select * from stu where sid not in('S_1001','S_1002','S_1003')
+      select * from stu where age is null; 
+      select * from stu where age>=20 and age<=40; 
+      -- between限制查询数据范围时包括了边界值，not between不包括
+      select * from stu where age between 20 and 40; 
+      select * from stu where stu where gender!='male'; 
+      select * from stu where gender<>'male'; 
+      select * from stu where not gender='male'; 
+      select * from stu where not sname is null;
+      select * from stu where sname like '_____'; -- 查询姓名由5个字母构成的学生记录 
+      select * from stu where sname like '____i'; -- 查询姓名由5个字母构成，并且第5个字母为“i”的学生 
+      select * from stu where sname like 'z%'; -- 查询姓名以“z”开头的学生记录 
+      select * from stu where sname like '_i%';-- 查询姓名中第2个字母为“i”的学生记录 
+      select * from stu where sname like '%a%';-- 查询姓名中包括“a”字母的学生记录
+      ```
+   6. 排序
+      ```
+      select * from stu order by age asc; -- 升序排序，也可以不加asc，默认为升序 
+      select * from stu order by age desc; --降序 
+      select * from emp order by sal desc,empno asc;
+      -- 按月薪降序排序，如果月薪相同时，按编号升序排序。只有在前一个条件相同时，后一个条件才会起作用。
+      ```
+   7. 聚合函数
+    聚合函数是用来做纵向运算的函数
+       - count():统计指定列不为null的记录行数
+       - max():计算指定列的最大值，如果指定列是字符串类型，那么使用字符串排序运算
+       - min():计算指定列的最小值，如果指定列是字符串类型，那么使用字符串排序运算
+       - sum():计算指定列的数值和，如果指定列类型不是数值类型，那么计算结果为0。求和的时候忽略null，如果都是null，则算出来的结果为null
+       - avg():计算指定列的平均值，如果指定列类型不是数值类型，那么计算结果为0
+      ```
+      select count(*) as cnt from emp;-- 计算emp表中记录数 
+      select count(comm) cnt from emp;-- 查询emp表中拥有佣金的人数，因为count()函数中给出的是comm列，那么只统计comm列非null的行数。 
+      select count(*) from emp where sal>2500;-- 查询emp表中月薪大于2500的人数 
+      select count(comm),count(mgr) from emp; -- 查询有佣金的人数，以及由领导的人数 
+      select sum(sal) from emp; -- 查询所有雇员的佣金和 
+      select sum(sal),sum(comm) from emp; -- 查询所有雇员月薪和，以及所有雇员佣金和 
+      select sum(sal+ifnumm(comm,0)) from emp; -- 查询所有雇员月薪+佣金和 
+      select avg(sal) from emp; select max(sal),min(sal) from emp;-- 查询最高工资和最低工资
+      ```
+   8. 分组查询
+   当需要分组查询时需要使用group by子句，例如查询每个部分的工资和，就需要使用部门来分组。
+   **注：凡是和聚合函数同时出现的列名，则一定要写在group by之后**
+      ```
+      select deptno,sum(sal) from emp group by deptno;-- 查询每个部门的编号和每个部门的工资和 
+      select deptno,count(*) from emp group by deptno;-- 查询每个部门的部门编号以及每个部门的人数 
+      select deptno,count(*) from emp where sal>1500 group by deptno;-- 查询每个部门的编号以及每个部门工资大于1500的人数 
+      ```
+   9. having子句
+   where和having的区别：
+      - 作用的对象不同。WHERE 子句作用于表和视图，HAVING 子句作用于组。having一般跟在group by之后，执行记录组选择的一部分来工作的。where则是执行所有数据来工作的。
+      - WHERE 在分组和聚集计算之前选取输入行（因此，它控制哪些行进入聚集计算）， 而 HAVING 在分组和聚集之后选取分组的行。因此，WHERE 子句不能包含聚集函数；而having子句总是包含聚集函数
+      ```
+      select deptno,sum(sal) from emp group by deptno having sum(sal)>9000;
+      ```
+   1.  limit（方言，MySQL特有的）
+   limit用来限制查询结果的起始行，以及总行数
+        ```
+        select * from emp limit 0,5; -- 查询5行记录，起始行从0开始。起始行从0开始，即从第一行开始
+        select * from emp limit 5; -- 查询5行记录，起始行默认从0开始。起始行从0开始，即从第一行开始
+        select * from emp limit 3,10;-- 查询10行记录，起始行从3开始。就是从第4行开始查
+        ```
+   11. 分页查询
+   如果一页记录为10条，希望查看第3页应该怎么查呢？
+        - 第一页记录起始行为0，一共查询10行
+        - 第二页记录起始行为10，一共查询10行
+        - 第三页记录起始行为20，一共查询10行
+   12. 查询语句的执行顺序
+       - 查询语句书写顺序：select-from-where-group by-having-order by-limit
+       - 查询语句执行顺序：from-where-group by-having-select-order by-limit
+       - from决定从哪儿获取数据，where，group by，having决定决定显示那几行，select决定显示的列，order by对列进行排序，limit觉得获取哪些数据。
+4. 多表查询
+   1. 合并结果集
+      ```
+      create table A(
+          name varchar(10),
+          score int
+      ); create table B(
+          name varchar(10),
+          score int
+      ); 
+      insert into A values('a',10),('b',20),('c',30);-- 这种语法可以插入三条数据 
+      insert into B values('a',10),('b',20),('d',40);
+      ```
+      union，合并两个或多个select语句的结果集。条件：每个结果集必须有相同的列数，相容的数据类型。
+      union运算符合并了两个查询结果结果集，其中完全重复的数据被合并为了一条。如果要返回所有记录，在后边添加all。
+      ```
+      select * from A
+      union
+      select * from B;
+
+      select * from A
+      union all
+      select * from B;
+      ```
+    2. 连接查询
+    (inner) join
+    Left/right/full (outer) join [where …]
+    select * from A left outer join B on A.xx = B.yy
+        ```
+        通过left join去重
+        select test1.*,t2.kjxyh from test1 left join(
+        Select * From
+        (
+        select a.*,row_number() over(partition by Name,sex order by id) r
+        from test2 a
+        ) where r = 1 ) t2
+        on  test1.Name = t2.Name And  test1.sex = t2.sex
+        ```
+   3. 子查询
+   SQL语句允许将一个查询语句做为一个结果集供其他SQL语句使用，就像使用普通的表一样，被当作结果集的查询语句被称为子查询。
+      - 若结果集为单行单列（标量子查询），则可放在select或where语句中
+      - 若结果集为多行单列，可放在where语句中，配合in使用
+      - 若结果集中有多行多列（就相当于一个表，派生表），一般作为数据源进行再一次检索。
+      ```
+      -- 查询与SCOTT同一个部门的员工 
+      select * from emp where deptno=(select deptno from emp where ename='SCOTT'); 
+      -- 查询工作和工资与MARTIN完全相同的员工信息 
+      select * from emp where (job,sal) in (select job,sal from emp where ename='MARTIN'); 
+      -- 查询有2个以上直接下属的员工信息 
+      select * from emp where empno in (select mgr from emp group by mgr having count(mgr)>=2); 
+      -- 查询员工编号为7788的员工名称、员工工资、部门名称、部门地址 
+      select e.ename,e.sal,d.dname,d.loc from emp e,(select dname,loc,deptno from dept) d where e.deptno=d.deptno and e.empno=7788;
+      ```
 #### mysql的InnoDB引擎和Myisam的区别
 
 ##### 区别
