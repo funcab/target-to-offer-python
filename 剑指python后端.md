@@ -42,7 +42,7 @@ REVOKE privilege ON databasename.tablename FROM 'username'@'host';
 注意: 假如你在给用户’username’@’%’授权的时候是这样的(或类似的)：GRANT SELECT ON testDB.user TO ‘username’@’%’, 则在使用REVOKE SELECT ON . FROM ‘username’@’%’;命令并不能撤销该用户对testDB数据库中user表的SELECT 操作。相反，如果授权使用的是GRANT SELECT ON . TO ‘username’@’%’;则REVOKE SELECT ON testDB.user FROM ‘username’@’%’;命令也不能撤销该用户对testDB数据库中user表的Select 权限。
 具体信息可以用命令SHOW GRANTS FOR ‘username’@’%’; 查看。
 ```
-##### 数据库 表 索引 视图
+##### 数据库 表 查询
 
 1. 数据库    
     ```
