@@ -77,12 +77,12 @@ REVOKE privilege ON databasename.tablename FROM 'username'@'host';
     1. 建表
          - 创建新表
             ```
-            CREATE TABLE IF NOT EXISTS `runoob_tbl`(
-              `runoob_id` INT UNSIGNED AUTO_INCREMENT,
-              `runoob_title` VARCHAR(100) NOT NULL,
-              `runoob_author` VARCHAR(40) NOT NULL,
-              `submission_date` DATE,
-              PRIMARY KEY ( `runoob_id` )
+            CREATE TABLE IF NOT EXISTS runoob_tbl(
+              runoob_id INT UNSIGNED AUTO_INCREMENT,
+              runoob_title VARCHAR(100) NOT NULL,
+              runoob_author VARCHAR(40) NOT NULL,
+              submission_date DATE,
+              PRIMARY KEY ( runoob_id )
             )ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
             CREATE TABLE IF NOT EXISTS t_user( 
@@ -745,5 +745,6 @@ REVOKE privilege ON databasename.tablename FROM 'username'@'host';
 ### 非关系型数据库（redis）
 
 ## 操作系统（15%）
+### 常用命令
 
 ## Web框架（5%）
